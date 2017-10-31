@@ -2,10 +2,8 @@ package com.udacity.gradle.builditbigger;
 
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -13,18 +11,9 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.cmonzon.jokeviewermodule.JokeViewerActivity;
-import com.cmonzon.myapplication.backend.myApi.MyApi;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.extensions.android.json.AndroidJsonFactory;
-import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
-import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
-
-import java.io.IOException;
 
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<String> {
-
-    private static final String TAG = MainActivity.class.getSimpleName();
 
     private static final int JOKE_LOADER_ID = 0;
 
@@ -66,46 +55,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public Loader<String> onCreateLoader(int id, Bundle args) {
-        return new AsyncTaskLoader<String>(this) {
-
-            private String joke = null;
-
-            @Override
-            protected void onStartLoading() {
-                if (joke != null) {
-                    deliverResult(joke);
-                } else {
-                    progressBar.setVisibility(View.VISIBLE);
-                    forceLoad();
-                }
-                super.onStartLoading();
-            }
-
-            @Override
-            public String loadInBackground() {
-                MyApi.Builder builder = new MyApi.Builder(AndroidHttp.newCompatibleTransport(), new AndroidJsonFactory(), null)
-                        .setRootUrl("http://10.0.2.2:8080/_ah/api/")
-                        .setGoogleClientRequestInitializer(new GoogleClientRequestInitializer() {
-                            @Override
-                            public void initialize(AbstractGoogleClientRequest<?> request) throws IOException {
-                                request.setDisableGZipContent(true);
-                            }
-                        });
-                MyApi myApiService = builder.build();
-                try {
-                    return myApiService.sayJoke().execute().getData();
-                } catch (IOException e) {
-                    Log.e(TAG, "load in background", e);
-                    return e.getLocalizedMessage();
-                }
-            }
-
-            @Override
-            public void deliverResult(String data) {
-                joke = data;
-                super.deliverResult(data);
-            }
-        };
+        return new JokeAsyncTaskLoader(this, progressBar);
     }
 
     @Override
